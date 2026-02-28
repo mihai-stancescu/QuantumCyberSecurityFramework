@@ -87,11 +87,9 @@ To write to another folder (e.g. `./output`), set the environment variable befor
   author  = {Mihail Alexandru Stancescu},
   title   = {A Hybrid Quantum-Classical Orchestration Framework for Probabilistic Cybersecurity Risk Estimation in Enterprise Systems},
   year    = {2026},
-  note    = {Code: \url{https://github.com/YOUR_USERNAME/REPO_NAME}}
+  note    = {Code: \url{https://github.com/mihai-stancescu/QuantumCyberSecurityFramework}}
 }
 ```
-
-Replace the URL with your repository link.
 
 ---
 
