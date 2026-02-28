@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "A Hybrid Quantum-Classical Orchestration Framework for Probabilistic Cybersecurity Risk Estimation in Enterprise Systems"
+authors:
+  - family-names: "Stancescu"
+    given-names: "Mihail Alexandru"
+year: 2026
+url: "https://github.com/mihai-stancescu/QuantumCyberSecurityFramework"
+repository-code: "https://github.com/mihai-stancescu/QuantumCyberSecurityFramework"
+type: software
+keywords:
+  - quantum computing
+  - cybersecurity
+  - risk estimation
+  - Monte Carlo
+  - QAE
+  - .NET

@@ -9,6 +9,8 @@
 /runtime_screenshots/
 /_work/
 
+
+/.cursor/
 # .NET
 [Dd]ebug/
 [Rr]elease/
