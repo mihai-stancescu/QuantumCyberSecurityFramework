@@ -1,0 +1,70 @@
+# --- Only QuantumCyberSecurityFramework/ and run_generate_data.* are tracked for GitHub ---
+/paper/
+/docs/
+/data/
+/scripts/
+/todo.md
+/assets/
+/paper-showcase/
+/runtime_screenshots/
+
+# .NET
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.meta
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Optional / local
+*.local
+.env.local
