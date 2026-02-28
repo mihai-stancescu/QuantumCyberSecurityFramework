@@ -14,13 +14,37 @@ namespace QuantumCyberSecurityFramework
 {
     class Program
     {
-        /// <summary>Output directory for JSON results; defaults to current working directory.</summary>
-        static string GetOutputDir() => Environment.GetEnvironmentVariable("QUANTUM_CYBER_OUTPUT")?.Trim()
-            is { Length: > 0 } dir ? dir : Directory.GetCurrentDirectory();
+        /// <summary>Output directory for JSON results. Uses QUANTUM_CYBER_OUTPUT if set and writable; otherwise a subdir under system temp (avoids sandbox/invalid paths like D:\home\sandbox).</summary>
+        static string GetOutputDir()
+        {
+            var envDir = Environment.GetEnvironmentVariable("QUANTUM_CYBER_OUTPUT")?.Trim();
+            if (!string.IsNullOrEmpty(envDir))
+            {
+                try
+                {
+                    var dir = Path.GetFullPath(envDir);
+                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                    var test = Path.Combine(dir, ".write_test");
+                    File.WriteAllText(test, "");
+                    File.Delete(test);
+                    return dir;
+                }
+                catch { /* fall through to temp */ }
+            }
+            var fallback = Path.Combine(Path.GetTempPath(), "QuantumCyberSecurityFramework");
+            try
+            {
+                if (!Directory.Exists(fallback)) Directory.CreateDirectory(fallback);
+            }
+            catch { }
+            return fallback;
+        }
 
         static void Main(string[] args)
         {
             string outDir = GetOutputDir();
+            if (outDir.StartsWith(Path.GetTempPath(), StringComparison.OrdinalIgnoreCase))
+                Console.WriteLine("(Output: using temp folder; set QUANTUM_CYBER_OUTPUT to choose a directory.)\n");
             Console.WriteLine("================================================================================");
             Console.WriteLine("  HYBRID QUANTUM-CLASSICAL ORCHESTRATION FRAMEWORK");
             Console.WriteLine("  Probabilistic Cybersecurity Risk Estimation in Enterprise Systems");
@@ -90,6 +114,7 @@ namespace QuantumCyberSecurityFramework
 
         static void SaveServicesToJson(List<EnterpriseService> services, string path)
         {
+            EnsureDirectoryExists(path);
             var options = new JsonSerializerOptions { WriteIndented = true };
             string json = JsonSerializer.Serialize(services, options);
             File.WriteAllText(path, json);
@@ -98,6 +123,7 @@ namespace QuantumCyberSecurityFramework
 
         static void SaveMonteCarloResults(MonteCarloSimulation.MonteCarloResult result, string path)
         {
+            EnsureDirectoryExists(path);
             var options = new JsonSerializerOptions { WriteIndented = true };
             string json = JsonSerializer.Serialize(result, options);
             File.WriteAllText(path, json);
@@ -106,10 +132,18 @@ namespace QuantumCyberSecurityFramework
 
         static void SaveQuantumResults(List<QuantumRiskEstimation.QuantumEstimationResult> results, string path)
         {
+            EnsureDirectoryExists(path);
             var options = new JsonSerializerOptions { WriteIndented = true };
             string json = JsonSerializer.Serialize(results, options);
             File.WriteAllText(path, json);
             Console.WriteLine($"\n✓ Saved Quantum results to: {path}");
+        }
+
+        static void EnsureDirectoryExists(string filePath)
+        {
+            var dir = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
         }
 
         static void PrintPerformanceComparison(MonteCarloSimulation.MonteCarloResult mcResult, 
