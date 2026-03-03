@@ -6,6 +6,7 @@ This repository contains **only** the code used to generate the empirical data f
 
 1. **.NET 8.0 (C#) application** – synthetic enterprise data, Monte Carlo baseline, and simulated Quantum Amplitude Estimation (QAE) results  
 2. **Script to generate the data** – runs the .NET app and produces the output JSON files  
+3. **QAE demo script** – `run_qae_demo.py` runs a real QAE experiment on Qiskit Aer simulator (tail probability estimation)
 
 No paper sources, figures, or other tooling are included here.
 
@@ -59,6 +60,17 @@ To write to another folder (e.g. `./output`), set the environment variable befor
 - **Windows:** `$env:QUANTUM_CYBER_OUTPUT = ".\output"; .\run_generate_data.ps1`
 - **Linux/macOS:** `QUANTUM_CYBER_OUTPUT=./output ./run_generate_data.sh`
 
+### QAE demo (Python, optional)
+
+To run the real QAE experiment on Qiskit Aer:
+
+```bash
+pip install -r requirements-qae.txt
+python run_qae_demo.py
+```
+
+Output: `qae_demo_results.json` (or in `QUANTUM_CYBER_OUTPUT` if set).
+
 ---
 
 ## Repository layout
@@ -67,8 +79,10 @@ To write to another folder (e.g. `./output`), set the environment variable befor
 ├── README.md
 ├── LICENSE
 ├── .gitignore
-├── run_generate_data.ps1    # Windows: run app and generate data
-├── run_generate_data.sh     # Linux/macOS: run app and generate data
+├── run_generate_data.ps1    # Windows: run .NET app and generate data
+├── run_generate_data.sh     # Linux/macOS: run .NET app and generate data
+├── run_qae_demo.py          # Real QAE demo on Qiskit Aer (optional)
+├── requirements-qae.txt     # Python deps for run_qae_demo.py
 └── QuantumCyberSecurityFramework/
     ├── Program.cs
     ├── Models/
