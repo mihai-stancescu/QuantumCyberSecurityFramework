@@ -64,14 +64,66 @@ namespace QuantumCyberSecurityFramework.Classical
             return result;
         }
 
-        private int SimulateSingleAttack()
+        /// <summary>Runs Monte Carlo with stratified sampling (by entry service) to reduce variance vs naive MC.</summary>
+        public MonteCarloResult RunSimulationStratified(int numSimulations = 10000)
+        {
+            int numStrata = _services.Count;
+            int perStratum = Math.Max(1, numSimulations / numStrata);
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var stratumMeans = new List<double>();
+            var allCounts = new List<int>();
+
+            for (int s = 0; s < numStrata; s++)
+            {
+                var entryService = _services[s];
+                int catastrophic = 0;
+                for (int i = 0; i < perStratum; i++)
+                {
+                    int compromised = SimulateSingleAttack(entryService.Id);
+                    allCounts.Add(compromised);
+                    if (compromised >= 30) catastrophic++;
+                }
+                stratumMeans.Add((double)catastrophic / perStratum);
+            }
+
+            stopwatch.Stop();
+            int nTotal = allCounts.Count;
+            double probCatastrophicStratified = stratumMeans.Average();
+            double varianceOfMeans = stratumMeans.Count > 1
+                ? stratumMeans.Sum(x => Math.Pow(x - probCatastrophicStratified, 2)) / (stratumMeans.Count - 1)
+                : 0;
+            double stratifiedVariance = varianceOfMeans / numStrata;
+
+            var result = new MonteCarloResult
+            {
+                NumSimulations = nTotal,
+                ExecutionTimeSeconds = stopwatch.Elapsed.TotalSeconds,
+                CompromisedCounts = allCounts,
+                MeanCompromised = allCounts.Average(),
+                StdDevCompromised = CalculateStdDev(allCounts),
+                MinCompromised = allCounts.Min(),
+                MaxCompromised = allCounts.Max(),
+                ProbCatastrophic = probCatastrophicStratified,
+                ProbMajor = allCounts.Count(c => c >= 20) / (double)nTotal,
+                ProbModerate = allCounts.Count(c => c >= 10) / (double)nTotal,
+                VarianceOfEstimator = stratifiedVariance,
+                IsStratified = true
+            };
+            var sorted = allCounts.OrderByDescending(x => x).ToList();
+            int var95Index = (int)(nTotal * 0.05);
+            result.VaR95 = sorted[var95Index];
+            result.CVaR95 = sorted.Take(var95Index + 1).Average();
+            return result;
+        }
+
+        /// <summary>Single run with optional fixed entry point (for stratified sampling).</summary>
+        private int SimulateSingleAttack(string? fixedEntryServiceId = null)
         {
             var compromised = new HashSet<string>();
             var toExplore = new Queue<string>();
             
-            // Start with a random entry point
-            var entryService = _services[_random.Next(_services.Count)];
-            toExplore.Enqueue(entryService.Id);
+            string entryId = fixedEntryServiceId ?? _services[_random.Next(_services.Count)].Id;
+            toExplore.Enqueue(entryId);
             
             while (toExplore.Count > 0)
             {
@@ -149,7 +201,7 @@ namespace QuantumCyberSecurityFramework.Classical
         {
             public int NumSimulations { get; set; }
             public double ExecutionTimeSeconds { get; set; }
-            public List<int> CompromisedCounts { get; set; }
+            public List<int> CompromisedCounts { get; set; } = new List<int>();
             public double MeanCompromised { get; set; }
             public double StdDevCompromised { get; set; }
             public int MinCompromised { get; set; }
@@ -159,6 +211,10 @@ namespace QuantumCyberSecurityFramework.Classical
             public double ProbModerate { get; set; }
             public double VaR95 { get; set; }
             public double CVaR95 { get; set; }
+            /// <summary>Variance of the tail-probability estimator (stratified runs only).</summary>
+            public double VarianceOfEstimator { get; set; }
+            /// <summary>True if this result used stratified sampling.</summary>
+            public bool IsStratified { get; set; }
         }
     }
 }

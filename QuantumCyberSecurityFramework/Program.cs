@@ -62,21 +62,31 @@ namespace QuantumCyberSecurityFramework
             string pathData = Path.Combine(outDir, "dotnet_enterprise_vulnerability_data.json");
             SaveServicesToJson(services, pathData);
 
-            // Step 2: Run Classical Monte Carlo Simulation
+            // Step 2: Run Classical Monte Carlo Simulation (naive and stratified baseline)
             Console.WriteLine("\n\nSTEP 2: Running Classical Monte Carlo Simulation");
             Console.WriteLine("─────────────────────────────────────────────────────────────");
             
             var mcSimulation = new MonteCarloSimulation(services, seed: 42);
             var mcResult = mcSimulation.RunSimulation(numSimulations: 10000);
+            var mcStratified = mcSimulation.RunSimulationStratified(numSimulations: 10000);
             
             string pathMc = Path.Combine(outDir, "dotnet_monte_carlo_results.json");
             SaveMonteCarloResults(mcResult, pathMc);
+            Console.WriteLine($"\nStratified (by entry service): P(catastrophic) = {mcStratified.ProbCatastrophic:F4}, Var(estimator) = {mcStratified.VarianceOfEstimator:E4}");
+
+            // Step 2b: QAE resource estimation (state prep not implemented; order-of-magnitude bounds)
+            Console.WriteLine("\n\nSTEP 2b: QAE Resource Estimation");
+            Console.WriteLine("─────────────────────────────────────────────────────────────");
+            var resourceReport = QaeResourceEstimation.Estimate(services.Count, services.Sum(s => s.Vulnerabilities?.Count ?? 0), epsilon: 0.01);
+            Console.WriteLine($"  Outcome register qubits: {resourceReport.OutcomeRegisterQubits}; total lower bound: {resourceReport.LowerBoundTotalQubits}; upper (full encoding): {resourceReport.UpperBoundLogicalQubits}");
+            Console.WriteLine($"  State-prep gate estimate (order of magnitude): {resourceReport.StatePreparationGateCountEstimate:N0}; circuit depth estimate: {resourceReport.CircuitDepthEstimate:N0}");
 
             // Step 3: Run Quantum Risk Estimation at multiple precision levels
             Console.WriteLine("\n\nSTEP 3: Running Quantum Amplitude Estimation (Simulated)");
             Console.WriteLine("─────────────────────────────────────────────────────────────");
             
-            double trueRiskProb = mcResult.MeanCompromised / services.Count;
+            // QAE target: tail probability P(X >= 30) (catastrophic), not mean fraction
+            double trueRiskProb = mcResult.ProbCatastrophic;
             var quantumEstimator = new QuantumRiskEstimation(trueRiskProb, seed: 42);
             
             var epsilonValues = new[] { 0.1, 0.05, 0.01, 0.005 };
@@ -201,7 +211,7 @@ namespace QuantumCyberSecurityFramework
 
             Console.WriteLine("KEY INSIGHTS:");
             Console.WriteLine("─────────────");
-            Console.WriteLine($"✓ Query Complexity: Quantum achieves {bestQResult.TheoreticalSpeedup:F2}× advantage (84× fewer queries)");
+            Console.WriteLine($"✓ Query Complexity: Quantum achieves {bestQResult.TheoreticalSpeedup:F0}× advantage ({bestQResult.TheoreticalSpeedup:F0}× fewer queries)");
             Console.WriteLine($"✗ Wall-Clock Time: Quantum is {1.0/(bestQResult.EquivalentClassicalSamples*mcResult.ExecutionTimeSeconds/10000.0/bestQResult.TotalExecutionTime):F2}× SLOWER due to NISQ overhead");
             Console.WriteLine($"⚠ Overhead Dominance: {nisqOverhead/bestQResult.TotalExecutionTime:P0} of quantum execution is overhead, not computation");
             Console.WriteLine($"→ Break-Even Point: Quantum becomes competitive when classical takes >{bestQResult.TotalExecutionTime:F1}s");
